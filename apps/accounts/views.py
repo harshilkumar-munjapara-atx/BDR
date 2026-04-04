@@ -1,4 +1,8 @@
 import logging
+import secrets
+from datetime import timedelta
+
+from django.utils import timezone
 
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -9,10 +13,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.audit.services import log_action
 
-from .models import User
+from .models import RegistrationKey, User, UserEmailVerification
 from .permissions import IsAdmin
-
-logger = logging.getLogger(__name__)
 from .serializers import (
     AdminUserListSerializer,
     AdminUserStatusSerializer,
@@ -22,6 +24,9 @@ from .serializers import (
     UserDetailSerializer,
     UserUpdateSerializer,
 )
+from .tasks import send_account_verification_email
+
+logger = logging.getLogger(__name__)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -37,6 +42,14 @@ class RegisterView(generics.CreateAPIView):
             target=user,
             changed_fields={"email": user.email, "role": user.role},
         )
+
+        token = secrets.token_urlsafe(32)
+        UserEmailVerification.objects.create(
+            user=user,
+            token=token,
+            expires_at=timezone.now() + timedelta(hours=24),
+        )
+        send_account_verification_email.delay(user.email, token)
 
 
 class LoginView(TokenObtainPairView):
@@ -119,7 +132,6 @@ class RegistrationKeyListView(generics.ListAPIView):
     serializer_class = RegistrationKeySerializer
 
     def get_queryset(self):
-        from .models import RegistrationKey
         return RegistrationKey.objects.select_related("created_by").order_by("-created_at")
 
 
@@ -139,3 +151,55 @@ class RegistrationKeyCreateView(generics.CreateAPIView):
             target=key,
             changed_fields={"key_value": key.key_value},
         )
+
+
+# --- Email verification ---
+
+class SendEmailVerificationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+
+        if user.email_verified:
+            return Response({"detail": "Email is already verified."})
+
+        UserEmailVerification.objects.filter(user=user, verified_at__isnull=True).delete()
+
+        token = secrets.token_urlsafe(32)
+        UserEmailVerification.objects.create(
+            user=user,
+            token=token,
+            expires_at=timezone.now() + timedelta(hours=24),
+        )
+        send_account_verification_email.delay(user.email, token)
+
+        return Response({"detail": f"Verification email sent to {user.email}."})
+
+
+class ConfirmEmailVerificationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        token = request.data.get("token", "").strip()
+        if not token:
+            return Response({"detail": "Token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            verification = UserEmailVerification.objects.get(token=token, verified_at__isnull=True)
+        except UserEmailVerification.DoesNotExist:
+            return Response({"detail": "Invalid or already used token."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if verification.expires_at < timezone.now():
+            return Response({"detail": "Token has expired. Request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if verification.user_id != request.user.pk:
+            return Response({"detail": "Token does not belong to your account."}, status=status.HTTP_403_FORBIDDEN)
+
+        verification.verified_at = timezone.now()
+        verification.save()
+
+        request.user.email_verified = True
+        request.user.save(update_fields=["email_verified"])
+
+        return Response({"detail": "Email verified successfully."})

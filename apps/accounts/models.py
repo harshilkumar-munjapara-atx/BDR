@@ -66,6 +66,21 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.role == self.Role.ADMIN
 
 
+class UserEmailVerification(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="email_verifications")
+    token = models.CharField(max_length=64, unique=True)
+    sent_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "user_email_verifications"
+
+    def __str__(self):
+        return f"Verification for {self.user.email}"
+
+
 class RegistrationKey(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     key_value = models.CharField(max_length=128, unique=True)
