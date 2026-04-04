@@ -180,6 +180,30 @@ class AdminListingListSerializer(serializers.ModelSerializer):
         fields = ["id", "company_name", "slug", "owner_email", "status", "source", "created_at", "updated_at"]
 
 
+class SearchResultSerializer(serializers.ModelSerializer):
+    company_name = serializers.CharField(source="identity.company_name", default="")
+    slug = serializers.CharField(source="identity.slug", default="")
+    tagline = serializers.CharField(source="identity.tagline", default="")
+    logo_url = serializers.URLField(source="identity.logo_url", default="")
+    sector_tags = serializers.ListField(
+        child=serializers.CharField(), source="identity.sector_tags", default=list
+    )
+    hq_country = serializers.CharField(source="contact.hq_country", default="")
+    hq_city = serializers.CharField(source="contact.hq_city", default="")
+    funding_stage = serializers.CharField(source="commercial.funding_stage", default="")
+    products = ListingProductSerializer(many=True, read_only=True)
+    key_people = ListingKeyPersonSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = BusinessListing
+        fields = [
+            "id", "slug", "company_name", "tagline", "logo_url",
+            "sector_tags", "hq_country", "hq_city", "funding_stage",
+            "products", "key_people",
+            "status", "source", "published_at", "created_at", "updated_at",
+        ]
+
+
 class AdminPublishSerializer(serializers.ModelSerializer):
     class Meta:
         model = BusinessListing
