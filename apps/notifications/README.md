@@ -6,7 +6,7 @@ All routes are admin-only (`IsAdmin` permission required).
 
 ### 1. List Notifications
 
-Route: `/api/notifications/`  
+Route: `/api/admin/notifications/`  
 Method: `GET`  
 Authentication: Admin only
 
@@ -38,7 +38,7 @@ Authentication: Admin only
 
 ### 2. Mark Notification as Read
 
-Route: `/api/notifications/{id}/read/`  
+Route: `/api/admin/notifications/{id}/read/`  
 Method: `PATCH`  
 Authentication: Admin only
 
@@ -72,7 +72,7 @@ Authentication: Admin only
 
 ### 3. Mark All Notifications as Read
 
-Route: `/api/notifications/read-all/`  
+Route: `/api/admin/notifications/read-all/`  
 Method: `POST`  
 Authentication: Admin only
 
