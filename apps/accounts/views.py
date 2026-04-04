@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -9,6 +11,8 @@ from apps.audit.services import log_action
 
 from .models import User
 from .permissions import IsAdmin
+
+logger = logging.getLogger(__name__)
 from .serializers import (
     AdminUserListSerializer,
     AdminUserStatusSerializer,
@@ -26,6 +30,7 @@ class RegisterView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
+        logger.info("New user registered: email=%s role=%s", user.email, user.role)
         log_action(
             actor=None,
             action="created",
@@ -46,8 +51,10 @@ class LogoutView(APIView):
             refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
             token.blacklist()
+            logger.info("User logged out: user_id=%s", request.user.id)
             return Response(status=status.HTTP_204_NO_CONTENT)
-        except Exception:
+        except Exception as e:
+            logger.warning("Logout failed for user_id=%s: %s", request.user.id, e)
             return Response({"detail": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -93,6 +100,10 @@ class AdminUserStatusView(generics.UpdateAPIView):
 
     def perform_update(self, serializer):
         user = serializer.save()
+        logger.info(
+            "Admin user_id=%s updated status of user_id=%s to %s",
+            self.request.user.id, user.id, user.status,
+        )
         log_action(
             actor=self.request.user,
             action="updated",
@@ -118,6 +129,10 @@ class RegistrationKeyCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         key = serializer.save()
+        logger.info(
+            "Admin user_id=%s created registration key: key_value=%s",
+            self.request.user.id, key.key_value,
+        )
         log_action(
             actor=self.request.user,
             action="key_changed",
