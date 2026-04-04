@@ -1,3 +1,7 @@
+import os
+
+from django.conf import settings
+from django.http import FileResponse, Http404
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
@@ -133,3 +137,17 @@ def _create_listing_from_row(data: dict, actor) -> BusinessListing | None:
         ])
 
     return listing
+
+
+class SampleImportFileView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, _request):
+        file_path = os.path.join(settings.MEDIA_ROOT, "samples", "listings_import_sample.xlsx")
+        if not os.path.exists(file_path):
+            raise Http404("Sample file not found.")
+        return FileResponse(
+            open(file_path, "rb"),
+            as_attachment=True,
+            filename="listings_import_sample.xlsx",
+        )

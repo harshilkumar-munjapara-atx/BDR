@@ -1,6 +1,5 @@
 import secrets
 
-from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework import status
@@ -41,18 +40,9 @@ class SendContactEmailVerificationView(APIView):
             expires_at=expires_at,
         )
 
-        send_mail(
-            subject="Verify your listing contact email — BDR",
-            message=(
-                f"Please verify your listing's contact email address.\n\n"
-                f"Verification token: {token}\n\n"
-                f"This token expires in 24 hours. Use it at:\n"
-                f"POST /api/listings/mine/verify-email/ with {{\"token\": \"{token}\"}}"
-            ),
-            from_email=None,  # Uses DEFAULT_FROM_EMAIL
-            recipient_list=[contact.primary_email],
-            fail_silently=False,
-        )
+        from .tasks import send_verification_email
+        send_verification_email.delay(contact.primary_email, token)
+
         return Response({"detail": f"Verification email sent to {contact.primary_email}."})
 
 
