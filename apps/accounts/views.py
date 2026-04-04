@@ -203,3 +203,6 @@ class ConfirmEmailVerificationView(APIView):
         request.user.save(update_fields=["email_verified"])
 
         return Response({"detail": "Email verified successfully."})
+
+
+# TODO: Change pass and forget pass
