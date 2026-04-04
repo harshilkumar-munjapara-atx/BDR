@@ -86,40 +86,45 @@ class ListingWriteSerializer(serializers.ModelSerializer):
         identity_data = validated_data.pop("identity", None)
         contact_data = validated_data.pop("contact", None)
         commercial_data = validated_data.pop("commercial", None)
-        offices_data = validated_data.pop("offices", [])
-        products_data = validated_data.pop("products", [])
-        key_people_data = validated_data.pop("key_people", [])
+        # Use None as sentinel so we can distinguish "not sent" from "sent as []"
+        offices_data = validated_data.pop("offices", None)
+        products_data = validated_data.pop("products", None)
+        key_people_data = validated_data.pop("key_people", None)
 
-        if identity_data:
-            slug = generate_unique_slug(
-                identity_data["company_name"],
-                existing_id=listing.pk,
+        if identity_data is not None:
+            # company_name may be absent in a partial update — fall back to existing
+            company_name = identity_data.get("company_name") or getattr(
+                getattr(listing, "identity", None), "company_name", ""
             )
+            slug = generate_unique_slug(company_name, existing_id=listing.pk)
             ListingIdentity.objects.update_or_create(
                 listing=listing,
                 defaults={**identity_data, "slug": slug},
             )
 
-        if contact_data:
+        if contact_data is not None:
             ListingContact.objects.update_or_create(listing=listing, defaults=contact_data)
 
-        if commercial_data:
+        if commercial_data is not None:
             ListingCommercial.objects.update_or_create(listing=listing, defaults=commercial_data)
 
-        listing.offices.all().delete()
-        ListingOffice.objects.bulk_create([
-            ListingOffice(listing=listing, **o) for o in offices_data
-        ])
+        if offices_data is not None:
+            listing.offices.all().delete()
+            ListingOffice.objects.bulk_create([
+                ListingOffice(listing=listing, **o) for o in offices_data
+            ])
 
-        listing.products.all().delete()
-        ListingProduct.objects.bulk_create([
-            ListingProduct(listing=listing, **p) for p in products_data
-        ])
+        if products_data is not None:
+            listing.products.all().delete()
+            ListingProduct.objects.bulk_create([
+                ListingProduct(listing=listing, **p) for p in products_data
+            ])
 
-        listing.key_people.all().delete()
-        ListingKeyPerson.objects.bulk_create([
-            ListingKeyPerson(listing=listing, **kp) for kp in key_people_data
-        ])
+        if key_people_data is not None:
+            listing.key_people.all().delete()
+            ListingKeyPerson.objects.bulk_create([
+                ListingKeyPerson(listing=listing, **kp) for kp in key_people_data
+            ])
 
     def create(self, validated_data):
         listing = BusinessListing.objects.create(

@@ -182,3 +182,9 @@ UNFOLD = {
 
 # Search cache TTL (seconds)
 SEARCH_CACHE_TTL = 60 * 5  # 5 minutes
+
+# Celery
+CELERY_BROKER_URL = config("REDIS_URL")
+CELERY_RESULT_BACKEND = config("REDIS_URL")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
