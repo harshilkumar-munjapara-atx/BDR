@@ -13,7 +13,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.audit.services import log_action
 
-from .models import RegistrationKey, User, UserEmailVerification
+from .models import PasswordResetToken, RegistrationKey, User, UserEmailVerification
 from .permissions import IsAdmin
 from .serializers import (
     AdminUserListSerializer,
@@ -24,7 +24,7 @@ from .serializers import (
     UserDetailSerializer,
     UserUpdateSerializer,
 )
-from .tasks import send_account_verification_email
+from .tasks import send_account_verification_email, send_password_reset_email
 
 logger = logging.getLogger(__name__)
 
@@ -205,4 +205,95 @@ class ConfirmEmailVerificationView(APIView):
         return Response({"detail": "Email verified successfully."})
 
 
-# TODO: Change pass and forget pass
+# --- Password management ---
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        current_password = request.data.get("current_password", "")
+        new_password = request.data.get("new_password", "")
+
+        if not current_password or not new_password:
+            return Response(
+                {"detail": "current_password and new_password are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not request.user.check_password(current_password):
+            return Response(
+                {"detail": "Current password is incorrect."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(new_password) < 8:
+            return Response(
+                {"detail": "New password must be at least 8 characters."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request.user.set_password(new_password)
+        request.user.save(update_fields=["password"])
+        logger.info("User user_id=%s changed their password.", request.user.id)
+        return Response({"detail": "Password changed successfully."})
+
+
+class ForgotPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip().lower()
+        if not email:
+            return Response({"detail": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Always return 200 to avoid email enumeration
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"detail": "If an account with that email exists, a reset link has been sent."})
+
+        PasswordResetToken.objects.filter(user=user, used_at__isnull=True).delete()
+
+        token = secrets.token_urlsafe(32)
+        PasswordResetToken.objects.create(
+            user=user,
+            token=token,
+            expires_at=timezone.now() + timedelta(hours=1),
+        )
+        send_password_reset_email.delay(user.email, token)
+
+        return Response({"detail": "If an account with that email exists, a reset link has been sent."})
+
+
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        token = request.data.get("token", "").strip()
+        new_password = request.data.get("new_password", "")
+
+        if not token or not new_password:
+            return Response(
+                {"detail": "token and new_password are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(new_password) < 8:
+            return Response(
+                {"detail": "Password must be at least 8 characters."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            reset = PasswordResetToken.objects.select_related("user").get(token=token, used_at__isnull=True)
+        except PasswordResetToken.DoesNotExist:
+            return Response({"detail": "Invalid or already used token."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if reset.expires_at < timezone.now():
+            return Response({"detail": "Token has expired. Request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+
+        reset.used_at = timezone.now()
+        reset.save(update_fields=["used_at"])
+
+        reset.user.set_password(new_password)
+        reset.user.save(update_fields=["password"])
+
+        logger.info("User user_id=%s reset their password via token.", reset.user.id)
+        return Response({"detail": "Password reset successfully. You can now log in with your new password."})

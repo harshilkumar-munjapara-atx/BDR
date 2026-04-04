@@ -210,11 +210,197 @@ Authentication: `Bearer <token>`
 
 ---
 
+### 7. Send Email Verification
+
+Route: `/api/auth/send-verification/`  
+Method: `POST`  
+Authentication: `Bearer <token>`
+
+#### Request Body:
+None
+
+#### Response (Success - 200)
+```json
+{
+    "detail": "Verification email sent to user@example.com."
+}
+```
+
+#### Response (Already Verified - 200)
+```json
+{
+    "detail": "Email is already verified."
+}
+```
+
+> Deletes any existing unused token before issuing a new one. The token expires in 24 hours.
+
+---
+
+### 8. Confirm Email Verification
+
+Route: `/api/auth/verify-email/`  
+Method: `POST`  
+Authentication: `Bearer <token>`
+
+#### Request Body:
+```json
+{
+    "token": "<verification_token>"
+}
+```
+
+#### Response (Success - 200)
+```json
+{
+    "detail": "Email verified successfully."
+}
+```
+
+#### Response (Error - 400, Missing Token)
+```json
+{
+    "detail": "Token is required."
+}
+```
+
+#### Response (Error - 400, Invalid/Used Token)
+```json
+{
+    "detail": "Invalid or already used token."
+}
+```
+
+#### Response (Error - 400, Expired Token)
+```json
+{
+    "detail": "Token has expired. Request a new one."
+}
+```
+
+#### Response (Error - 403, Wrong Account)
+```json
+{
+    "detail": "Token does not belong to your account."
+}
+```
+
+> The token from the verification email must be submitted by the same authenticated user it was issued to.
+
+---
+
+### 9. Change Password
+
+Route: `/api/auth/change-password/`  
+Method: `POST`  
+Authentication: `Bearer <token>`
+
+#### Request Body:
+```json
+{
+    "current_password": "oldpassword",
+    "new_password": "newpassword123"
+}
+```
+
+#### Response (Success - 200)
+```json
+{
+    "detail": "Password changed successfully."
+}
+```
+
+#### Response (Error - 400, Wrong Current Password)
+```json
+{
+    "detail": "Current password is incorrect."
+}
+```
+
+#### Response (Error - 400, Too Short)
+```json
+{
+    "detail": "New password must be at least 8 characters."
+}
+```
+
+---
+
+### 10. Forgot Password
+
+Route: `/api/auth/forgot-password/`  
+Method: `POST`  
+Authentication: None
+
+#### Request Body:
+```json
+{
+    "email": "user@example.com"
+}
+```
+
+#### Response (Success - 200)
+```json
+{
+    "detail": "If an account with that email exists, a reset link has been sent."
+}
+```
+
+> Always returns 200 regardless of whether the email exists, to prevent account enumeration. The reset token expires in 1 hour. Any existing unused tokens for the account are invalidated before a new one is issued.
+
+---
+
+### 11. Reset Password
+
+Route: `/api/auth/reset-password/`  
+Method: `POST`  
+Authentication: None
+
+#### Request Body:
+```json
+{
+    "token": "<reset_token>",
+    "new_password": "newpassword123"
+}
+```
+
+#### Response (Success - 200)
+```json
+{
+    "detail": "Password reset successfully. You can now log in with your new password."
+}
+```
+
+#### Response (Error - 400, Invalid/Used Token)
+```json
+{
+    "detail": "Invalid or already used token."
+}
+```
+
+#### Response (Error - 400, Expired Token)
+```json
+{
+    "detail": "Token has expired. Request a new one."
+}
+```
+
+#### Response (Error - 400, Too Short)
+```json
+{
+    "detail": "Password must be at least 8 characters."
+}
+```
+
+> The token is single-use. Once consumed it cannot be reused.
+
+---
+
 ## Admin Endpoints
 
 > All admin endpoints require `role: admin`.
 
-### 7. List Users
+### 12. List Users
 
 Route: `/api/admin/users/`  
 Method: `GET`  
@@ -249,7 +435,7 @@ Authentication: `Bearer <token>` (Admin only)
 
 ---
 
-### 8. Update User Status
+### 13. Update User Status
 
 Route: `/api/admin/users/<uuid>/status/`  
 Method: `PATCH`  
@@ -294,7 +480,7 @@ Authentication: `Bearer <token>` (Admin only)
 
 ---
 
-### 9. List Registration Keys
+### 14. List Registration Keys
 
 Route: `/api/admin/registration-keys/`  
 Method: `GET`  
@@ -325,7 +511,7 @@ Authentication: `Bearer <token>` (Admin only)
 
 ---
 
-### 10. Create Registration Key
+### 15. Create Registration Key
 
 Route: `/api/admin/registration-keys/create/`  
 Method: `POST`  

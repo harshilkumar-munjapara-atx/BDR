@@ -81,6 +81,21 @@ class UserEmailVerification(models.Model):
         return f"Verification for {self.user.email}"
 
 
+class PasswordResetToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_reset_tokens")
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "password_reset_tokens"
+
+    def __str__(self):
+        return f"PasswordResetToken for {self.user.email}"
+
+
 class RegistrationKey(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     key_value = models.CharField(max_length=128, unique=True)
