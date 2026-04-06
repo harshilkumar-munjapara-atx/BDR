@@ -15,3 +15,4 @@ staticfiles/
 .DS_Store
 
 postgres_data/
+staticfiles/

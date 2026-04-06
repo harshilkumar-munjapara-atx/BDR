@@ -70,8 +70,17 @@ DATABASES = {
         "PASSWORD": config("DB_PASSWORD"),
         "HOST": config("DB_HOST"),
         "PORT": config("DB_PORT", default="5432"),
+        'OPTIONS': {
+            'pool': {
+                'min_size': 2,        # Minimum connections in pool
+                'max_size': 10,       # Maximum connections per worker  # 20 × 4 workers = 80 connections, safe headroom
+                'timeout': 30,        # Connection timeout in seconds
+            },
+        },
+        'CONN_HEALTH_CHECKS': True,"connect_timeout": 10,
     }
 }
+
 
 CACHES = {
     "default": {
