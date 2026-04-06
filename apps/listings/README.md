@@ -370,19 +370,95 @@ Authentication: `Bearer <token>`
 #### Response (Success - 200)
 ```json
 {
-    "count": 42,
+    "count": 2,
     "page": 1,
     "page_size": 20,
+    "match_type": "exact",
     "results": [
         {
-            "id": "a1b2c3d4-...",
-            "company_name": "Acme Corp",
-            "slug": "acme-corp",
-            "owner_email": "owner@acme.com",
+            "id": "0e87817f-b31d-4097-8655-5ffecf5dc153",
+            "slug": "lattice-cloud",
+            "company_name": "Lattice Cloud",
+            "tagline": "Connecting ideas to outcomes",
+            "logo_url": "",
+            "sector_tags": [
+                "Logistics",
+                "Supply Chain"
+            ],
+            "hq_country": "Senegal",
+            "hq_city": "Dakar",
+            "funding_stage": "Series A",
+            "products": [
+                {
+                    "id": "5cc9e24e-0ca0-42fc-8163-b7ed445f4f14",
+                    "name": "InsightHub",
+                    "short_description": "A powerful insighthub for modern teams.",
+                    "category_tag": "SaaS"
+                },
+                {
+                    "id": "a5f8a61e-fd1b-4ec9-bc64-e04411e0985b",
+                    "name": "ReportBuilder",
+                    "short_description": "A powerful reportbuilder for modern teams.",
+                    "category_tag": "API"
+                }
+            ],
+            "key_people": [
+                {
+                    "id": "6c9a1525-a4a6-487f-89f2-f5d91d87ac15",
+                    "full_name": "Ngozi Banda",
+                    "job_title": "CEO",
+                    "linkedin_url": "https://linkedin.com/in/ngozi-banda",
+                    "display_order": 0
+                },
+                {
+                    "id": "000229ed-114f-4909-802c-504d42b70906",
+                    "full_name": "Yemi Mwangi",
+                    "job_title": "Founder",
+                    "linkedin_url": "https://linkedin.com/in/yemi-mwangi",
+                    "display_order": 1
+                }
+            ],
             "status": "published",
             "source": "manual",
-            "created_at": "2025-10-09T11:00:00Z",
-            "updated_at": "2025-10-09T11:00:00Z"
+            "published_at": null,
+            "created_at": "2026-04-04T07:29:21.752277Z",
+            "updated_at": "2026-04-04T07:29:21.752279Z"
+        },
+        {
+            "id": "6c1c7205-9ad7-4d4e-b63e-103cae0847ca",
+            "slug": "nexacloud",
+            "company_name": "NexaCloud",
+            "tagline": "Your growth, our mission",
+            "logo_url": "",
+            "sector_tags": [
+                "FinTech",
+                "SaaS"
+            ],
+            "hq_country": "South Africa",
+            "hq_city": "Johannesburg",
+            "funding_stage": "Bootstrapped",
+            "products": [
+                {
+                    "id": "995e585f-7449-4e2f-87bc-a2f4f3170e28",
+                    "name": "SecureVault",
+                    "short_description": "A powerful securevault for modern teams.",
+                    "category_tag": "Mobile App"
+                }
+            ],
+            "key_people": [
+                {
+                    "id": "4e258bc2-2ed3-4e11-bcc4-9d17ae961135",
+                    "full_name": "Yemi Okafor",
+                    "job_title": "MD",
+                    "linkedin_url": "https://linkedin.com/in/yemi-okafor",
+                    "display_order": 0
+                }
+            ],
+            "status": "published",
+            "source": "manual",
+            "published_at": null,
+            "created_at": "2026-04-04T07:29:21.628594Z",
+            "updated_at": "2026-04-04T16:14:05.325383Z"
         }
     ]
 }
