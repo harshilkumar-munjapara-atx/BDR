@@ -105,6 +105,11 @@ All endpoints require a valid JWT `Authorization: Bearer <token>` header unless 
 | POST | `/api/auth/logout/` | Blacklist refresh token |
 | GET | `/api/auth/me/` | Get own profile |
 | PATCH | `/api/auth/me/update/` | Update name / phone number |
+| POST | `/api/auth/send-verification/` | Send account email verification |
+| POST | `/api/auth/verify-email/` | Confirm account email with token |
+| POST | `/api/auth/change-password/` | Change password (authenticated) |
+| POST | `/api/auth/forgot-password/` | Request password-reset link |
+| POST | `/api/auth/reset-password/` | Confirm password reset with token |
 
 ### Listings (investor)
 
@@ -153,15 +158,16 @@ All endpoints require a valid JWT `Authorization: Bearer <token>` header unless 
 |---|---|---|
 | GET | `/api/admin/notifications/` | List unread + recent notifications |
 | PATCH | `/api/admin/notifications/<id>/read/` | Mark notification as read |
-| PATCH | `/api/admin/notifications/read-all/` | Mark all notifications as read |
+| POST | `/api/admin/notifications/read-all/` | Mark all notifications as read |
 | GET | `/api/admin/audit-log/` | Read-only audit log |
 
 ### Admin — Import
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/api/admin/import/preview/` | Upload Excel file, get validation report |
-| POST | `/api/admin/import/confirm/` | Confirm import, write rows as draft listings |
+| GET | `/api/admin/listings/import/sample/` | Download sample Excel template |
+| POST | `/api/admin/listings/import/preview/` | Upload Excel file, get validation report |
+| POST | `/api/admin/listings/import/confirm/` | Confirm import, write rows as draft listings |
 
 ---
 
